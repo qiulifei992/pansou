@@ -1,0 +1,32 @@
+name: Build ARMv7 Docker Image And Package Tar
+on:
+  workflow_dispatch:  # 手动触发编译，想编译的时候点一下就行
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 拉取代码
+        uses: actions/checkout@v4
+
+      - name: 设置QEMU交叉编译（关键！ARMv7必备）
+        uses: docker/setup-qemu-action@v3
+        
+      - name: 设置Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 构建ARMv7架构Docker镜像
+        run: |
+          docker buildx build --platform linux/arm/v7 -t pansou-armv7:latest --load .
+
+      - name: 将镜像保存为tar压缩包（和你之前要的文件格式一致）
+        run: |
+          docker save pansou-armv7:latest -o pansou-armv7.tar
+          gzip pansou-armv7.tar # 可选压缩，体积更小，下载更快
+
+      - name: 上传编译产物到Github（供你下载）
+        uses: actions/upload-artifact@v4
+        with:
+          name: pansou-armv7-build
+          path: |
+            pansou-armv7.tar.gz
+            pansou-armv7.tar
