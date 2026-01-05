@@ -1,0 +1,31 @@
+name: Build ARMv7 Docker Image
+
+on:
+  push:
+    branches: [ main ]  # 主分支推送时触发
+  workflow_dispatch:      # 也可手动触发
+
+jobs:
+  build:
+    runs-on: ubuntu-latest  # 使用GitHub提供的免费服务器
+    steps:
+      - uses: actions/checkout@v4  # 拉取代码
+
+      - name: Set up QEMU          # 启用ARM模拟
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Buildx        # 启用多架构构建
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build ARMv7 Image    # 构建并打包
+        run: |
+          docker buildx build --platform linux/arm/v7 \
+            -t your-app-armv7 \
+            --output type=local,dest=./output .
+          tar -czvf your-app-armv7.tar.gz -C output .
+
+      - name: Upload Artifact      # 上传构建结果（自动生成下载链接）
+        uses: actions/upload-artifact@v4
+        with:
+          name: pansou-armv7
+          path: pansou-armv7.tar.gz
